@@ -12,7 +12,7 @@ import java.io.*; //for testing purposes
  //SHA-2 hash function implementation adapted from http://www.mkyong.com/java/java-sha-hashing-example/
 
 
-public class generateOTP
+public class generateOTP_UI
 {
     public static void main(String[] args)throws Exception
     {
@@ -38,18 +38,16 @@ public class generateOTP
 	String app2Password;
 	//counter starts at 0 - no clicks yet
 	int app1Counter=0;
-	int app2Counter=1; //counter starts at 1 - even without generating p/w via click it expects a p/w
+	int app2Counter=0; //counter starts at 1 - even without generating p/w via click it expects a p/w
 
 	//do first run with intialization vector
 	generateOTP firstApp = new generateOTP();
  	app1Hash = firstApp.genHash(IVtest);
 	app1Password = firstApp.genPassword(app1Hash); 	
-	System.out.println(app1Counter);
 
 	generateOTP secondApp = new generateOTP();
  	app2Hash = secondApp.genHash(IVtest);
 	app2Password = firstApp.genPassword(app2Hash); 	
-	System.out.println(app2Counter);
 
 	/*LinkedList<String> hashList = new LinkedList();
 	ListIterator<String> itr = hashList.listIterator();
@@ -71,6 +69,8 @@ public class generateOTP
  		app1Hash = firstApp.genHash(app1Hash); //send old hash as seed for next sha hash
 		app1Password = firstApp.genPassword(app1Hash); //new OTP will be calculated using the new hash
 		app1Counter++;
+        	System.out.println("app1 Hash: " + app1Hash);
+		System.out.println("app1 OTP: " + app1Password);
 		System.out.println(app1Counter);
 	}
 System.out.println("-------------------------------------------------------");
@@ -89,9 +89,10 @@ System.out.println("-------------------------------------------------------");
 		}
 		//TODO: prompt user to try again
 		sync = true; //now we should by synced up again
+		System.out.println("we appear to be out of sync");
 	}
 	else if ((app1Counter+1)==app2Counter) { //state at beginning - nothing has been clicked yet
-		
+		System.out.println("what are we doing here?");	
 	}
 	else sync = false;
 
@@ -100,6 +101,8 @@ System.out.println("-------------------------------------------------------");
 	 	app2Hash = secondApp.genHash(app2Hash); //send old hash as seed for next sha hash
 		app2Password = secondApp.genPassword(app2Hash); //new OTP will be calculated using the new hash
 		app2Counter++;
+        	System.out.println("app2 Hash: " + app2Hash);
+		System.out.println("app2 OTP: " + app2Password);
 		System.out.println(app2Counter);
 
 		//prompt for input - replace with GUI prompt later
@@ -135,7 +138,7 @@ System.out.println("-------------------------------------------------------");
          		sb.append(Integer.toString((byteData[i] & 0xff) + 0x100, 16).substring(1));
         	}
  		//This generates a single hash 
-        	System.out.println("Hash (in hex): " + sb.toString());
+
 		return sb.toString();
 	}
 	
@@ -177,7 +180,7 @@ System.out.println("-------------------------------------------------------");
 
 
 		}
-		System.out.println("OTP: " + Password);
+
 		return Password;
 	}
 
