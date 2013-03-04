@@ -4,8 +4,11 @@
 
 import java.security.MessageDigest;
 import java.util.Random;
+import java.util.LinkedList;
+import java.util.ListIterator;
 import java.security.SecureRandom; //better than random
 import java.util.Arrays;
+import java.io.*; //for testing purposes
  //SHA-2 hash function implementation adapted from http://www.mkyong.com/java/java-sha-hashing-example/
 
 
@@ -13,36 +16,73 @@ public class generateOTP
 {
     public static void main(String[] args)throws Exception
     {
+	
+	Console console = System.console(); //Get input for testing purposes
 	//Start with initialization vector : 
 	Random rand = new Random();
 	int randomNum = rand.nextInt();
 	String IV = Integer.toString(randomNum);
-	System.out.println("Random number (IV): "+ IV);
+	//System.out.println("Random number (IV): "+ IV);
 	String IVtest = "123456";
+	String randomNumString;
+	//String test2 = "5aba1db3b561abe65a12fd109b50ca5ecfc88e5d106d4b511c7653b843d0e3d4";
  	//SecureRandom randomGenerator = new SecureRandom();
 	//byte[] randomNumber = new byte[20];
 	//randomGenerator.nextBytes(randomNumber);
- 	String storeHash;
-	String storePassword;
-	//do first run with intialization vector
-	generateOTP firstRun = new generateOTP();
- 	storeHash = firstRun.genHash(IV);
-	storePassword = firstRun.genPassword(storeHash); 	
+ 	String app1Hash;
+	String app1newHash;
+	String app1Password;
 
-	//firstRun.genPassword(hashTest); 
-//function to study collision property: generate 100,000 OTP, determine collision property
-	for(int i = 0; i < 2; i++) {
-	rand = new Random();
-	randomNum = rand.nextInt();
-	IV = Integer.toString(randomNum);
-	System.out.println("Random number (IV): "+ IV);
-	firstRun = new generateOTP();
- 	storeHash = firstRun.genHash(IV);
-	storePassword = firstRun.genPassword(storeHash); 
+ 	String app2Hash;
+	String app2newHash;
+	String app2Password;
+	//counter starts at 0 - no clicks yet
+	int app1Counter=0;
+	int app2Counter=0; 
+
+	//do first run with intialization vector
+	generateOTP firstApp = new generateOTP();
+ 	app1Hash = firstApp.genHash(IVtest);
+	app1Password = firstApp.genPassword(app1Hash); 	
+
+	generateOTP secondApp = new generateOTP();
+ 	app2Hash = secondApp.genHash(IVtest);
+	app2Password = firstApp.genPassword(app2Hash); 	
+
+
+for(int i = 0; i < 20; i++) {
+ 		app1Hash = firstApp.genHash(app1Hash); //send old hash as seed for next sha hash
+		app1Password = firstApp.genPassword(app1Hash); //new OTP will be calculated using the new hash
+		app1Counter++;
+        	System.out.println("app1 Hash: " + app1Hash);
+		System.out.println("app1 OTP: " + app1Password);
+		System.out.println(app1Counter);
 	}
 
 
-}	//this is where we generate our hash 
+	/*LinkedList<String> hashList = new LinkedList();
+	ListIterator<String> itr = hashList.listIterator();
+	int collisionCounter = 0;
+*/
+
+//function to study collision property: generate 100,000 OTP, determine collision property
+
+	/*for(int i = 0; i < 2; i++) {
+ 		Hash = firstRun.genHash(storeHash); //send old hash as seed for next sha hash
+		Password = firstRun.genPassword(storeHash); //new OTP will be calculated using the new hash
+		hashList.add(storeHash); //store all these hashes in a list
+		while(itr.hasNext()) { //search through list for collisions
+			if(storeHash == itr.next()) collisionCounter++;
+		}
+	}*/
+
+}	
+
+
+
+
+
+//this is where we generate our hash 
 	public String genHash(String input)throws Exception {
        		MessageDigest md = MessageDigest.getInstance("SHA-256");
        		 md.update(input.getBytes());
@@ -52,8 +92,8 @@ public class generateOTP
         	for (int i = 0; i < byteData.length; i++) {
          		sb.append(Integer.toString((byteData[i] & 0xff) + 0x100, 16).substring(1));
         	}
- 		//This generates a single hash based on an initialization vector. 
-        	System.out.println("Hash (in hex): " + sb.toString());
+ 		//This generates a single hash 
+
 		return sb.toString();
 	}
 	
@@ -65,6 +105,7 @@ public class generateOTP
 		char[] tempChar = new char[6];
 		for(int i = 0; i < 12; i++) {
 			shortHashArray[i] = hashArray[52+i]; //shortHashArray is last 12 digits of entire hash
+			System.out.println(shortHashArray[i]);
 		}
 		
 		String Password = "";
@@ -76,9 +117,21 @@ public class generateOTP
 			temp = temp.trim();
 			hexNum = Integer.parseInt(temp, 16); //convert hex num string to decimal;
 			String hexNumString = Integer.toString(hexNum);
+				
 			if (Password.length() == 5) { //just add first char of hex num
+
 				Password += hexNumString.charAt(0);
-	
+				
+			}
+			else if (Password.length() == 4) {              
+				if(hexNum<10) {  // if hex num is only 1 char long, add just that 
+					//(and continue in loop to add first char of next hex num)
+					Password += hexNumString.charAt(0);
+				}
+				else {					//add first two chars of hex num ()) 
+					Password += hexNumString.charAt(0);
+					Password += hexNumString.charAt(1);
+				}
 			}
 			else if (Password.length() >= 6) { //password too large, quit
 				break;
@@ -89,7 +142,7 @@ public class generateOTP
 
 
 		}
-		System.out.println("OTP: " + Password);
+
 		return Password;
 	}
 

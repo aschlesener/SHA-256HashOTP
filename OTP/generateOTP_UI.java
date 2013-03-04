@@ -100,11 +100,15 @@ System.out.println("Random number (IV): "+ IV);
 				Password += hexNumString.charAt(0);
 				
 			}
-			else if (Password.length() == 4) { //add only first two chars of hex num
-				Password += hexNumString.charAt(0);
-				System.out.println(Password);
-				Password += hexNumString.charAt(1); //java.lang.StringIndexOutOfBoundsException!
-								//String index out of range: 1
+			else if (Password.length() == 4) {              
+				if(hexNum<10) {  // if hex num is only 1 char long, add just that 
+					//(and continue in loop to add first char of next hex num)
+					Password += hexNumString.charAt(0);
+				}
+				else {					//add first two chars of hex num ()) 
+					Password += hexNumString.charAt(0);
+					Password += hexNumString.charAt(1);
+				}
 			}
 			else if (Password.length() >= 6) { //password too large, quit
 				break;
