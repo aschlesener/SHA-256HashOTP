@@ -18,11 +18,13 @@ import java.io.*; //for testing purposes
  *
  * @author schlesa
  */
+
 public class generateOTP_UI {
 
-    /**
-     * @param args the command line arguments
-     */
+	static Random rand = new Random();
+	static int randomNum = rand.nextInt();
+	public static String IV = Integer.toString(randomNum);
+
     public static void main(String[] args)throws Exception {
 new PasswordGenGUI().setVisible(true);  
 new OTPValidatorGUI().setVisible(true);       
@@ -30,11 +32,8 @@ new OTPValidatorGUI().setVisible(true);
 
 Console console = System.console(); //Get input for testing purposes
 	//Start with initialization vector : 
-	Random rand = new Random();
-	int randomNum = rand.nextInt();
-	String IV = Integer.toString(randomNum);
-	//System.out.println("Random number (IV): "+ IV);
-	String IVtest = "123456";
+System.out.println("Random number (IV): "+ IV);
+	//String IVtest = "123456";
 	String randomNumString;
 
  	String app1Hash;
@@ -51,61 +50,14 @@ Console console = System.console(); //Get input for testing purposes
 
 	//do first run with intialization vector
 	generateOTP_UI firstApp = new generateOTP_UI();
- 	app1Hash = firstApp.genHash(IVtest);
+ 	app1Hash = firstApp.genHash(IV);
 	app1Password = firstApp.genPassword(app1Hash); 	
 
 	generateOTP_UI secondApp = new generateOTP_UI();
- 	app2Hash = secondApp.genHash(IVtest);
+ 	app2Hash = secondApp.genHash(IV);
 	app2Password = firstApp.genPassword(app2Hash); 	
 
-	
 
-//APP2 - expects to start at 1
-	/*boolean sync = false;;
-	if(app1Counter == app2Counter) { //both synced up so we can prompt user for password
-		sync = true;
-		System.out.println("synced!");
-	}
-	else if ((app1Counter-app2Counter)<100) { //out of sync but within 100
-		for (int i = 0; i < (app1Counter-1); i++) {
-	 		app2Hash = secondApp.genHash(app2Hash); //send old hash as seed for next sha hash
-			app2Password = secondApp.genPassword(app2Hash); //new OTP will be calculated using the new hash
-			app2Counter++;
-			System.out.println(app2Counter);
-		}
-		//TODO: prompt user to try again
-		sync = true; //now we should by synced up again
-		System.out.println("we appear to be out of sync");
-	}
-	else if ((app1Counter+1)==app2Counter) { //state at beginning - nothing has been clicked yet
-		System.out.println("what are we doing here?");	
-	}
-	else sync = false;
-
-	if(sync == true) { //counts are synced, generate calculated OTP, check against user's input
-		System.out.println("true");
-	 	app2Hash = secondApp.genHash(app2Hash); //send old hash as seed for next sha hash
-		app2Password = secondApp.genPassword(app2Hash); //new OTP will be calculated using the new hash
-		app2Counter++;
-        	System.out.println("app2 Hash: " + app2Hash);
-		System.out.println("app2 OTP: " + app2Password);
-		System.out.println(app2Counter);
-
-		//prompt for input - replace with GUI prompt later
-		String inputPassword = console.readLine("Password: ");		
-		if (inputPassword.equals(app2Password)) { //user inputted correct password, grant access
-			System.out.println("CORRECT PASSWORD. ACCESS GRANTED.");
-		}
-		else { //password incorrect, deny access
-			System.out.println("Wrong password. Access denied.");
-		}		
-
-	}
-	else { //totally out of sync, intrusion attempt detected, SHUT DOWN EVERYTHING
-		 //temporary placeholder
-	}
-
- */
     }
 //this is where we generate our hash 
 	public String genHash(String input)throws Exception {
@@ -118,7 +70,6 @@ Console console = System.console(); //Get input for testing purposes
          		sb.append(Integer.toString((byteData[i] & 0xff) + 0x100, 16).substring(1));
         	}
  		//This generates a single hash 
-
 		return sb.toString();
 	}
 	
@@ -151,7 +102,9 @@ Console console = System.console(); //Get input for testing purposes
 			}
 			else if (Password.length() == 4) { //add only first two chars of hex num
 				Password += hexNumString.charAt(0);
-				Password += hexNumString.charAt(1);
+				System.out.println(Password);
+				Password += hexNumString.charAt(1); //java.lang.StringIndexOutOfBoundsException!
+								//String index out of range: 1
 			}
 			else if (Password.length() >= 6) { //password too large, quit
 				break;
@@ -175,22 +128,21 @@ class PasswordGenGUI extends JFrame {
      */
 	//counter starts at 0 - no clicks yet
 	public static int app1Counter = 0;
-	public static int app2Counter=1; //counter starts at 1 - even without generating p/w via click it expects a p/w
-      static String IV = "123456";
-public static String app1Password;
-	//static String app1Hash = new generateOTP_UI().genHash(IV);
-	static String app1Hash;
-
-static {
+	//public static int app2Counter=1; //counter starts at 1 - even without generating p/w via click it expects a p/w
+        static String IVtest = "123456";
+	public static String app1Password;
+	public static String app1Hash;
+	//this is necessary because the compiler complains about an exception
+	static {
 	
 	try {
-		app1Hash = new generateOTP_UI().genHash(IV);
+		app1Hash = new generateOTP_UI().genHash(generateOTP_UI.IV);
 	}
 	catch(Exception ex) {
 		throw new RuntimeException(ex);
 	}
 
-}
+	}
 
 
     public PasswordGenGUI() {
@@ -252,17 +204,14 @@ static {
     }// </editor-fold>                        
 
     private void displayOTPActionPerformed(java.awt.event.ActionEvent evt)throws Exception {                                           
-       //String test = "123456";
-      
-
 	app1Hash = new generateOTP_UI().genHash(app1Hash); //send old hash as seed for next sha hash
-		
-	 app1Password = new generateOTP_UI().genPassword(app1Hash); //new OTP will be calculated using the new hash
+	app1Password = new generateOTP_UI().genPassword(app1Hash); //new OTP will be calculated using the new hash
         app1Counter++;
         System.out.println("app1 Hash: " + app1Hash);
 	System.out.println("app1 OTP: " + app1Password);
-	System.out.println(app1Counter);
+	System.out.println("app1counter: " + app1Counter);
  	passwordBox.setText(app1Password);
+	OTPValidatorGUI.noPasswordGenerated = false; //password has been generated at least once
     }   
 
                                        
@@ -311,22 +260,26 @@ static {
 }
 //import static PasswordGenGUI.app1counter;
 class OTPValidatorGUI extends javax.swing.JFrame {
-	static int app2Counter=1; //counter starts at 1 - even without generating p/w via click it expects a p/w
-       static String IV = "123456";
-
-	//static String app1Hash = new generateOTP_UI().genHash(IV);
+	public static int app2Counter=0; 
+        public static String IVtest = "123456";
+	public static boolean sync = false;
+	public static boolean syncMessage = false;
+	public static boolean hadToResync = false;
+	public static boolean noPasswordGenerated = false;
+	static String app2Password;
+	//static final String app1Password = OTPValidatorGUI().app1Password;
 	static String app2Hash;
-
-static {
+	//we need this because the compiler complains about an exception otherwise
+	static {
 	
 	try {
-		app2Hash = new generateOTP_UI().genHash(IV);
+		app2Hash = new generateOTP_UI().genHash(generateOTP_UI.IV);
 	}
 	catch(Exception ex) {
 		throw new RuntimeException(ex);
 	}
 
-}
+	}
     /**
      * Creates new form OTPValidator
      */
@@ -372,12 +325,16 @@ static {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(checkButton)
+                    .addComponent(validityDisplay)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(46, 46, 46)
-                        .addComponent(passwordEntry, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(validityDisplay, javax.swing.GroupLayout.PREFERRED_SIZE, 251, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(38, Short.MAX_VALUE))
+                        .addGap(86, 86, 86)
+                        .addComponent(checkButton)
+                        .addGap(0, 88, Short.MAX_VALUE)))
+                .addContainerGap())
+            .addGroup(layout.createSequentialGroup()
+                .addGap(139, 139, 139)
+                .addComponent(passwordEntry, javax.swing.GroupLayout.PREFERRED_SIZE, 168, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -394,18 +351,80 @@ static {
         pack();
     }// </editor-fold>                        
 
-    private void checkButtonActionPerformed(java.awt.event.ActionEvent evt) {                                            
-         //String password = "123456";
-         String app2Password = PasswordGenGUI.app1Password;
-         String test = passwordEntry.getText();
-         if ((test.toString()).equals(app2Password)) {
-              validityDisplay.setText("Password correct, access granted.");          
-         }
-         else {
-              validityDisplay.setText("Password incorrect, access DENIED.");
-         }
-         
+    private void checkButtonActionPerformed(java.awt.event.ActionEvent evt)throws Exception {                                            
+	System.out.println("app2counter before incrementing: " + app2Counter);
+	if(PasswordGenGUI.app1Counter == (app2Counter+1)) { //both synced up so we can prompt user for password
+		sync = true;
+		syncMessage = false;
+		System.out.println("synced!");
+	}
+	else if ((((PasswordGenGUI.app1Counter)- app2Counter)<100)&&(((PasswordGenGUI.app1Counter)- app2Counter))>0) { //out of sync but within 100 - app1 clicked more
+		int temp = app2Counter;
+		for (int i = 0; i < (((PasswordGenGUI.app1Counter)-temp)); i++) {
+			app2Hash = new generateOTP_UI().genHash(app2Hash); //send old hash as seed for next sha hash
+			app2Password = new generateOTP_UI().genPassword(app2Hash); //new OTP will be calculated using the new hash
+			app2Counter++;
+			//System.out.println("app2Counter: " + app2Counter);
+			System.out.println("app2hash: " + app2Hash);
+			System.out.println("app2Password: " + app2Password);
+		}
+	System.out.println("app2Counter after resyncing: " + app2Counter);
+		syncMessage = true;
+		hadToResync = true;
+		sync = true; //now we should by synced up again
+		System.out.println("app1counter was higher");
+	}
+	else if (((app2Counter - (PasswordGenGUI.app1Counter))<100)&&((app2Counter- (PasswordGenGUI.app1Counter)))>0) { //out of sync but within 100 - app2 clicked more
+		int temp2 = PasswordGenGUI.app1Counter;
+		for (int i = 0; i < ((app2Counter-(temp2))); i++) {
+			PasswordGenGUI.app1Hash = new generateOTP_UI().genHash(PasswordGenGUI.app1Hash); //send old hash as seed for next sha hash
+			PasswordGenGUI.app1Password = new generateOTP_UI().genPassword(PasswordGenGUI.app1Hash); //new OTP will be calculated using the new hash
+			PasswordGenGUI.app1Counter++;
+			System.out.println(PasswordGenGUI.app1Hash);
+			System.out.println(PasswordGenGUI.app1Password);
+			System.out.println(PasswordGenGUI.app1Counter);
+		}
+		hadToResync = true;
+		syncMessage = true;
+		sync = true; //now we should by synced up again
+		System.out.println("app2counter was higher");
+	}
+	else if ((PasswordGenGUI.app1Counter)==app2Counter) { //user tries to check if password is valid w/o generating p/w
+		noPasswordGenerated=true;
+	}
+	else sync = false; //totally out of sync
+		
+	if((sync == true) && (syncMessage == false)) { //counts are synced, generate calculated OTP, check against user's input		
+		//if(hadToResync==false) {
+		System.out.println("true - counts have been/are synced, tiem to generate codez");
+	 	app2Hash = new generateOTP_UI().genHash(app2Hash); //send old hash as seed for next sha hash
+		app2Password = new generateOTP_UI().genPassword(app2Hash); //new OTP will be calculated using the new hash
+		app2Counter++;
+        	//System.out.println("app2 Hash: " + app2Hash); 
+		System.out.println("app2 OTP: " + app2Password);
+		System.out.println("app2Counter " + app2Counter);
+		//}
+ 	
+		//System.out.println("app2 OTP: " + app2Password);
+		//System.out.println("app2Counter " + app2Counter);
+		String inputPassword = passwordEntry.getText();
+         	if ((inputPassword.toString()).equals(app2Password)) { //entered password = password the calculated hash is expecting, and we haven't been set out of sync (requiring user to generate a new OTP)
+              		validityDisplay.setText("Password correct, access granted.");          
+        	 }
+        	 else {
+              	validityDisplay.setText("Password incorrect, access DENIED.");
+        	 }	
 
+	}
+	else if(syncMessage ==true) {
+		validityDisplay.setText("Re-synced. Please click on generate password ONCE and try again.");		
+		}
+	else if (noPasswordGenerated==true) {
+		validityDisplay.setText("Oops - looks like you haven't generated a password yet.");
+	}
+	else { //totally out of sync, intrusion attempt detected, SHUT DOWN EVERYTHING
+		validityDisplay.setText("ERROR - Generate Password button has been clicked too many times.");
+	}
     }                                           
 
     /**
