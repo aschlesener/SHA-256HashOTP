@@ -9,9 +9,7 @@ import java.beans.*;
 
 import java.security.MessageDigest;
 import java.util.Random;
-import java.util.LinkedList;
-import java.util.ListIterator;
-import java.util.Arrays;
+import java.security.SecureRandom; //better than random
 import java.security.GeneralSecurityException;
 import java.io.*; //for testing purposes
 /**
@@ -20,21 +18,20 @@ import java.io.*; //for testing purposes
  */
 
 public class generateOTP_UI {
+	//IV will be a secure random number
+ 	  static SecureRandom randomGenerator = new SecureRandom();
+	  static byte[] randomNumber = new byte[20];
+	  public static String IV;
 
-	static Random rand = new Random();
-	static int randomNum = rand.nextInt();
-	public static String IV = Integer.toString(randomNum);
-
+//MAIN FUNCTION
     public static void main(String[] args)throws Exception {
-new PasswordGenGUI().setVisible(true);  
-new OTPValidatorGUI().setVisible(true);       
+	//Start with initialization vector 
+	randomGenerator.nextBytes(randomNumber);
+	IV = new String(randomNumber);
 
-
-Console console = System.console(); //Get input for testing purposes
-	//Start with initialization vector : 
-System.out.println("Random number (IV): "+ IV);
-	//String IVtest = "123456";
-	String randomNumString;
+	new PasswordGenGUI().setVisible(true);  //open password generation display window
+	new OTPValidatorGUI().setVisible(true);       //open password verification display window
+	Console console = System.console(); //Get input for testing purposes
 
  	String app1Hash;
 	String app1newHash;
@@ -43,10 +40,6 @@ System.out.println("Random number (IV): "+ IV);
  	String app2Hash;
 	String app2newHash;
 	String app2Password;
-
-
-	//create object of other classes so they can be passed to the GUI functions
-	//genHash test = new genHash();
 
 	//do first run with intialization vector
 	generateOTP_UI firstApp = new generateOTP_UI();
@@ -133,14 +126,13 @@ class PasswordGenGUI extends JFrame {
 	//counter starts at 0 - no clicks yet
 	public static int app1Counter = 0;
 	//public static int app2Counter=1; //counter starts at 1 - even without generating p/w via click it expects a p/w
-        static String IVtest = "123456";
 	public static String app1Password;
 	public static String app1Hash;
 	//this is necessary because the compiler complains about an exception
 	static {
 	
 	try {
-		app1Hash = new generateOTP_UI().genHash(generateOTP_UI.IV);
+		app1Hash = new generateOTP_UI().genHash(generateOTP_UI.IV); //use initialization vector from main function
 	}
 	catch(Exception ex) {
 		throw new RuntimeException(ex);
@@ -211,9 +203,6 @@ class PasswordGenGUI extends JFrame {
 	app1Hash = new generateOTP_UI().genHash(app1Hash); //send old hash as seed for next sha hash
 	app1Password = new generateOTP_UI().genPassword(app1Hash); //new OTP will be calculated using the new hash
         app1Counter++;
-        System.out.println("app1 Hash: " + app1Hash);
-	System.out.println("app1 OTP: " + app1Password);
-	System.out.println("app1counter: " + app1Counter);
  	passwordBox.setText(app1Password);
 	OTPValidatorGUI.noPasswordGenerated = false; //password has been generated at least once
     }   
@@ -265,13 +254,11 @@ class PasswordGenGUI extends JFrame {
 //import static PasswordGenGUI.app1counter;
 class OTPValidatorGUI extends javax.swing.JFrame {
 	public static int app2Counter=0; 
-        public static String IVtest = "123456";
 	public static boolean sync = false;
 	public static boolean syncMessage = false;
 	public static boolean hadToResync = false;
 	public static boolean noPasswordGenerated = false;
 	static String app2Password;
-	//static final String app1Password = OTPValidatorGUI().app1Password;
 	static String app2Hash;
 	//we need this because the compiler complains about an exception otherwise
 	static {
@@ -356,11 +343,9 @@ class OTPValidatorGUI extends javax.swing.JFrame {
     }// </editor-fold>                        
 
     private void checkButtonActionPerformed(java.awt.event.ActionEvent evt)throws Exception {                                            
-	System.out.println("app2counter before incrementing: " + app2Counter);
 	if(PasswordGenGUI.app1Counter == (app2Counter+1)) { //both synced up so we can prompt user for password
 		sync = true;
 		syncMessage = false;
-		System.out.println("synced!");
 	}
 	else if ((((PasswordGenGUI.app1Counter)- app2Counter)<100)&&(((PasswordGenGUI.app1Counter)- app2Counter))>0) { //out of sync but within 100 - app1 clicked more
 		int temp = app2Counter;
@@ -368,15 +353,10 @@ class OTPValidatorGUI extends javax.swing.JFrame {
 			app2Hash = new generateOTP_UI().genHash(app2Hash); //send old hash as seed for next sha hash
 			app2Password = new generateOTP_UI().genPassword(app2Hash); //new OTP will be calculated using the new hash
 			app2Counter++;
-			//System.out.println("app2Counter: " + app2Counter);
-			System.out.println("app2hash: " + app2Hash);
-			System.out.println("app2Password: " + app2Password);
 		}
-	System.out.println("app2Counter after resyncing: " + app2Counter);
 		syncMessage = true;
 		hadToResync = true;
 		sync = true; //now we should by synced up again
-		System.out.println("app1counter was higher");
 	}
 	else if (((app2Counter - (PasswordGenGUI.app1Counter))<100)&&((app2Counter- (PasswordGenGUI.app1Counter)))>0) { //out of sync but within 100 - app2 clicked more
 		int temp2 = PasswordGenGUI.app1Counter;
@@ -384,14 +364,10 @@ class OTPValidatorGUI extends javax.swing.JFrame {
 			PasswordGenGUI.app1Hash = new generateOTP_UI().genHash(PasswordGenGUI.app1Hash); //send old hash as seed for next sha hash
 			PasswordGenGUI.app1Password = new generateOTP_UI().genPassword(PasswordGenGUI.app1Hash); //new OTP will be calculated using the new hash
 			PasswordGenGUI.app1Counter++;
-			System.out.println(PasswordGenGUI.app1Hash);
-			System.out.println(PasswordGenGUI.app1Password);
-			System.out.println(PasswordGenGUI.app1Counter);
 		}
 		hadToResync = true;
 		syncMessage = true;
 		sync = true; //now we should by synced up again
-		System.out.println("app2counter was higher");
 	}
 	else if ((PasswordGenGUI.app1Counter)==app2Counter) { //user tries to check if password is valid w/o generating p/w
 		noPasswordGenerated=true;
@@ -400,17 +376,12 @@ class OTPValidatorGUI extends javax.swing.JFrame {
 		
 	if((sync == true) && (syncMessage == false)) { //counts are synced, generate calculated OTP, check against user's input		
 		//if(hadToResync==false) {
-		System.out.println("true - counts have been/are synced, tiem to generate codez");
 	 	app2Hash = new generateOTP_UI().genHash(app2Hash); //send old hash as seed for next sha hash
 		app2Password = new generateOTP_UI().genPassword(app2Hash); //new OTP will be calculated using the new hash
 		app2Counter++;
-        	//System.out.println("app2 Hash: " + app2Hash); 
-		System.out.println("app2 OTP: " + app2Password);
-		System.out.println("app2Counter " + app2Counter);
+
 		//}
  	
-		//System.out.println("app2 OTP: " + app2Password);
-		//System.out.println("app2Counter " + app2Counter);
 		String inputPassword = passwordEntry.getText();
          	if ((inputPassword.toString()).equals(app2Password)) { //entered password = password the calculated hash is expecting, and we haven't been set out of sync (requiring user to generate a new OTP)
               		validityDisplay.setText("Password correct, access granted.");          
